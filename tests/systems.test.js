@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {clamp,damp,smooth,readSave,saveGame,pendulum,activityEmotion,RIDE_IDS} from '../src/systems.js';
+const storage=()=>{const map=new Map();return{getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,v)};};
+test('interpolation is bounded and independent of frame subdivision',()=>{assert.equal(clamp(9,0,1),1);assert.equal(smooth(-3),0);assert.equal(smooth(2),1);assert.ok(Math.abs(damp(0,1,5,.2)-damp(damp(0,1,5,.1),1,5,.1))<1e-12);});
+test('save roundtrip preserves only valid memories and ground position',()=>{const s=storage();assert.equal(saveGame(s,[10,5,-20],new Set(['coaster','wheel','unknown'])),true);assert.deepEqual(readSave(s),{version:1,position:[10,5,-20],visited:['coaster','wheel']});});
+test('invalid and unavailable saves fail gracefully',()=>{assert.equal(readSave({getItem:()=>'{broken'}),null);assert.equal(readSave({getItem:()=>JSON.stringify({version:1,position:[Infinity,0,0]})}),null);assert.equal(readSave({getItem:()=>JSON.stringify({version:1,position:[160,0,0]})}),null);assert.equal(readSave({getItem:()=>{throw Error('denied');}}),null);assert.equal(saveGame({setItem:()=>{throw Error('quota');}},[0,0,0],new Set()),false);});
+test('pendulum stays bounded over sustained input and eventually settles',()=>{const p={angle:0,velocity:0};for(let i=0;i<36000;i++){pendulum(p,Math.sin(i/60),1/60);assert.ok(Number.isFinite(p.angle));assert.ok(Math.abs(p.angle)<=1.1);assert.ok(Math.abs(p.velocity)<=2.2);}for(let i=0;i<36000;i++)pendulum(p,0,1/60);assert.ok(Math.abs(p.angle)<.001);});
+test('every ride has a bounded emotion timeline',()=>{for(const id of RIDE_IDS)for(const t of [-1,0,.25,.5,.99,1,2])assert.equal(typeof activityEmotion(id,t),'string');assert.equal(activityEmotion('coaster',.5),'Scared');assert.equal(activityEmotion('wheel',1),'Happy');});

@@ -1,0 +1,21 @@
+{
+  "name": "adventure-park",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "node --test tests/systems.test.js",
+    "test:browser": "playwright test"
+  },
+  "dependencies": {
+    "three": "0.170.0",
+    "@dimforge/rapier3d-compat": "0.14.0"
+  },
+  "devDependencies": {
+    "vite": "6.1.0",
+    "@playwright/test": "1.51.1"
+  }
+}
